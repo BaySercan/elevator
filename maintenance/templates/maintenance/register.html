@@ -1,0 +1,17 @@
+{% extends "maintenance/layout.html" %}
+{% load static %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+{% block main %}
+    <h1 style="margin-top:90px; margin-bottom:40px; text-align: center;">Register</h1>
+    <div class="d-flex justify-content-center align-self-center" style="margin-bottom: 80px;">
+        <form action="{% url 'register' %}" method="POST" class="col-lg-5 col-sm-12">
+            {% csrf_token %}
+            {{ formRegisteration }}
+            <center><input class="btn btn-primary" type="submit" value="Register" style="width: 100%;"></center>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "maintenance/layout.html" %}
+{% load static %}
+
+{% block title %}
+    Create Task
+{% endblock %}
+{% block head %}
+<script src="{% static 'maintenance/createtask.js' %}"></script>
+{% endblock %}
+
+{% block main %}
+    <h1 style="margin-top:90px; margin-bottom:40px; text-align: center;">Create Task</h1>
+    {% if buildings %}
+    <div style="margin-bottom: 100px; display: flex; justify-content: center; align-items: center;" >
+        <form action="{% url 'createTask' %}" method="POST" class="col-sm-12" id="taskForm">
+            {%csrf_token%}
+            <input type="hidden" name="building" id="buildingInput">
+            <input type="hidden" name="team" id="teamInput">>
+            <div class="table-responsive" id="buildingsTbl">
+                <h3>Choose a building for maintenance task</h3>
+                <table class="table table-sm table-striped table-hover table-bordered">
+                    <thead style="text-align: center;">
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Manager</th>
+                        <th>Last Maintenance</th>
+                        <th>Scheduled Maintenance</th>
+                        <th>Type</th>
+                        <th>Assigned</th>
+                        <th>Select</th>
+                    </thead>
+                    <tbody style="text-align: center;">
+                        {% for b in buildings %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ b.name }}</td>
+                                <td>{{ b.manager }}</td>
+                                <td>{{ b.last }}</td>
+                                <td>{{ b.task_status }}</td>
+                                <td>{{ b.task_type }}</td>
+                                <td>{{ b.task_team }}</td>
+                                <td>
+                                    <div class="form-check" style="display: flex; justify-content: center; align-items: center;">
+                                        <input class="form-check-input cbBuilding" type="checkbox" value="" id="building-{{ b.id }}" data-building="{{ b.id }}">
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="teamsTbl" class="table-responsive" style="display: none;">
+                <h3>Choose a team to assign this task</h3>
+                <table class="table table-sm table-striped table-hover table-bordered">
+                    <thead style="text-align: center;">
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Leader</th>
+                        <th>Members</th>
+                        <th>Select</th>
+                    </thead>
+                    <tbody style="text-align: center;">
+                        {% for t in teams %}
+                            <tr>
+                                <td style="vertical-align: middle;">{{ forloop.counter }}</td>
+                                <td style="vertical-align: middle;">{{ t.name }}</td>
+                                <td style="vertical-align: middle;">{{ t.leader.username }}</td>
+                                <td style="vertical-align: middle;">{% if t.members %}
+                                        {% for m in t.members %}
+                                            <p style="margin-bottom: 1px;">({{ m.username }})</p>
+                                        {% endfor %}
+                                    {% else %}
+                                        No members.
+                                    {% endif %}
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    <div class="form-check" style="display: flex; justify-content: center; align-items: center;">
+                                        <input class="form-check-input cbTeam" type="checkbox" value="" id="team-{{ t.id }}" data-team="{{ t.id }}">
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="descriptionArea" style="display: none;">
+                <h3>Choose task type and write a brief description about this task</h3>
+                <div style="display: flex; justify-content: space-around; flex-direction: row; margin-bottom: 15px;">
+                    <select name="taskType">
+                        {% for type in taskTypes %}
+                            <option value="{{ type.id }}">{{ type.type }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="date" name="date" class="form-control" style="width: 200px;">
+                </div>
+                <textarea rows="3" name="description" style="width: 100%;" class="form-control" maxlength="200"></textarea>
+            </div>
+            <div style="margin-top: 15px; margin-bottom: 50px;">
+                <a href="javascript:void(0)" class="btn btn-sm btn-primary" style="width: 100px; float: left; display: none;" id="backBtn">Back</a>
+                <a href="javascript:void(0)" class="btn btn-sm btn-primary" style="width: 100px; float:right; display: none;" id="nextBtn">Next</a>
+                <button class="btn btn-primary m-2 btn-sm" type="submit" style="display: none; float: right; background-color: blue; border-color: blue;" id="submitBtn">Create Task</button>
+            </div>
+            
+        </form>
+    </div>
+    {% else %}
+
+    {% endif %}
+    
+{% endblock %}

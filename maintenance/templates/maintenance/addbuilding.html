@@ -1,0 +1,17 @@
+{% extends "maintenance/layout.html" %}
+{% load static %}
+
+{% block title %}
+    Add Building
+{% endblock %}
+
+{% block main %}
+    <h1 style="margin-top:90px; margin-bottom:40px; text-align: center;">Add Building</h1>
+    <div style="margin-bottom: 100px; display: flex; justify-content: center; align-items: center;" >
+        <form action="{% url 'addBuilding' %}" method="POST" class="col-lg-5 col-sm-12">
+            {%csrf_token%}
+            {{ addBuildingForm }}
+            <button class="btn btn-primary m-2 btn-sm" type="submit" >Add Building</button>
+        </form>
+    </div>
+{% endblock %}
