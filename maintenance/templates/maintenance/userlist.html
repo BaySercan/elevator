@@ -44,7 +44,7 @@
                             {% else %}
                                 <td style="text-align: center;"><a href="javascript:void(0)" class="btn btn-sm btn-success conf" data-confirm="{{ user.id }}">Confirm</a></td>
                             {% endif %}
-                            <td style="text-align: center;">{{ user.team.name }}</td>
+                            <td style="text-align: center;">{{ user.team }}</td>
                             <td style="text-align: center;">{{ user.date_joined|localtime|date:"d/m/Y H:i:s" }}</td>
                             <td style="text-align: center;">{{ user.last_login|localtime|date:"d/m/Y H:i:s" }}</td>
                         </tr>

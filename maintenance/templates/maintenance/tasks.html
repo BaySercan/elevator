@@ -14,48 +14,80 @@
     <div style="margin-top:15px; height: 100px;">
         <a href="{% url 'createTask' %}" class="btn btn-sm btn-primary" style="float: left;">Create New Task</a>
     </div>
+    <div class="col-sm-12" style="margin-left: 0;">
+        <a href="{% url 'tasks' 3 %}" class="btn btn-sm btn-info mr-1" style="float: left;">All Tasks</a>
+        <a href="{% url 'tasks' 2 %}" class="btn btn-sm btn-warning mr-1" style="float: left;">On Going</a>
+        <a href="{% url 'tasks' 4 %}" class="btn btn-sm btn-danger mr-1" style="float: left;">Canceled</a>
+        <a href="{% url 'tasks' 1 %}" class="btn btn-sm btn-success mr-1" style="float: left;">Completed</a>
+    </div>
     {% if tasks %}
-        <div class="table-responsive">
+        <div class="table-responsive" style="margin-top: 50px;">
             <table class="table table-sm table-striped table-hover table-bordered">
-                <thead>
-                    <th>#</th>
-                    <th>Building Name</th>
-                    <th>Building Address</th>
-                    <th>Building Manager</th>
-                    <th>Team</th>
-                    <th>Task</th>
-                    <th>Date</th>
-                    <th>Result</th>
-                    <th>Materials</th>
-                    <th>Description</th>
-                    <th>Team Notes</th>
-                    <th>Created</th>
-                    <th>Closed</th>
+                <thead style="text-align: center;">
+                    <th style="vertical-align: middle;">#</th>
+                    <th style="vertical-align: middle;">Task ID</th>
+                    <th style="vertical-align: middle;">Building Name</th>
+                    <th style="vertical-align: middle;">Building Address</th>
+                    <th style="vertical-align: middle;">Building Manager</th>
+                    <th style="vertical-align: middle;">Team</th>
+                    <th style="vertical-align: middle;">Task</th>
+                    <th style="vertical-align: middle;">Date</th>
+                    <th style="vertical-align: middle;">Result</th>
+                    <th style="vertical-align: middle;">Materials</th>
+                    <th style="vertical-align: middle;">Description</th>
+                    <th style="vertical-align: middle;">Team Notes</th>
+                    <th style="vertical-align: middle;">Created</th>
+                    <th style="vertical-align: middle;">Closed</th>
+                    <th style="vertical-align: middle;">#</th>  
                 </thead>
                 <tbody>
                     {% for task in tasks %}
                         <tr>
-                            <td>{{ forloop.count }}</td>
-                            <td>{{ task.building.name }}</td>
-                            <td>{{ task.building.address }}</td>
-                            <td>{{ task.building.manager }}</td>
-                            <td>{{ task.team.name }}</td>
-                            <td>{{ task.type.type }}</td>
-                            <td>{{ task.date|localtime|date:"d/m/Y" }}</td>
-                            <td>{{ task.result }}</td>
-                            <td>{{ task.materials.name}}</td>
-                            <td>{{ task.description}}</td>
-                            <td>{{ task.notes}}</td>
-                            <td>{{ task.created|localtime|date:"d/m/Y H:i:s"}}</td>
-                            <td>{{ task.closed|localtime|date:"d/m/Y H:i:s"}}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ task.id }}</td>
+                            <td style="vertical-align: middle;">{{ task.building.name }}</td>
+                            <td style="vertical-align: middle;">{{ task.building.address }}</td>
+                            <td style="vertical-align: middle;">{{ task.building.manager }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ task.team.name }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ task.type.type }}</td>
+                            <td style="vertical-align: middle;">{{ task.date|localtime|date:"d/m/Y" }}</td>
+                            
+                            {% if task.result == True %}
+                            <td style="text-align: center; vertical-align: middle;" class="table-success">Completed</td>
+                            {% elif task.result == False %}
+                            <td style="text-align: center; vertical-align: middle;" class="table-danger">Cancelled</td>
+                            {% else %}
+                            <td style="text-align: center; vertical-align: middle;" class="table-warning">Ongoing</td>
+                            {% endif %}
+                            
+                            <td style="vertical-align: middle;">{{ task.materials.name}}</td>
+                            <td style="vertical-align: middle;">{{ task.description}}</td>
+                            <td style="vertical-align: middle;">{{ task.notes}}</td>
+                            <td style="vertical-align: middle;">{{ task.created|localtime|date:"d/m/Y H:i:s"}}</td>
+                            <td style="vertical-align: middle;">{{ task.closed|localtime|date:"d/m/Y H:i:s"}}</td>
+                            {% if not task.result%}
+                            <td style="vertical-align: middle; text-align: center;"><a class="btn btn-sm btn-danger taskCancelBtn" href="{% url 'cancelTask' task.id %}" data-taskid="{{ task.id }}">X</a></td>
+                            {% else %}
+                            <td></td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     {% else %}
-        <div>
+        <div style="display: block; margin-top: 100px;">
+            {% if request.resolver_match.kwargs.result == 4 %}
+            <p>You have no <strong>cancelled</strong> tasks.</p>
+            {% elif request.resolver_match.kwargs.result == 1 %}
+            <p>You have no <strong>completed</strong> tasks.</p>
+            {% elif request.resolver_match.kwargs.result == 2 %}
+            <p>You have no <strong>ongoing</strong> tasks.</p>
+            {% elif request.resolver_match.kwargs.result == 3 %}
             <p>No tasks have been created so far. Click <strong>"Create New Task"</strong> button and add a new task.</p>
+            {% else %}
+            <p>You have no <strong>ongoing</strong> tasks.</p>
+            {% endif %}
         </div>
     {% endif %}
 {% endblock %}

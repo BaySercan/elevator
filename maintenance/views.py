@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms.forms import Form
 from django.forms.widgets import TextInput
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.contrib.auth import authenticate, login, logout, password_validation
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect, request
@@ -214,15 +214,18 @@ def userlist(request):
 
     users = User.objects.all()
 
-    userTeams = UserTeam.objects.all()
-
     for u in users:
-        u.team = Team.objects.none()
-        if u in userTeams:
-            team_id = userTeams.filter(user_id = u.id).values('team_id')
-            team = Team.objects.filter(pk=team_id)
-            u.team |= team
-
+        try:
+            userTeam = UserTeam.objects.get(user_id = u.id)
+            if userTeam:
+                try:
+                    team = Team.objects.get(pk=userTeam.team_id)
+                    u.team = team.name
+                except:
+                    pass
+        except:
+            pass
+        
     return render(request, "maintenance/userlist.html", {
         "users": users
     })
@@ -486,6 +489,10 @@ def createTask(request):
         type_id = request.POST["taskType"]
         date = request.POST['date']
 
+        if date == "":
+            messages.warning(request, "Choose valid date for the task")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
         try:
             building = Building.objects.get(pk=building_id)
             team = Team.objects.get(pk=team_id)
@@ -508,18 +515,50 @@ def createTask(request):
             messages.warning(request, "Something went wrong, please try again.")
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         
-        return render(request, "maintenance/tasks.html", {
-            "tasks": Task.objects.filter(result=None)
-        })
+        #return render(request, "maintenance/tasks.html")
+        return HttpResponseRedirect('tasks')
         
 @login_required
-def tasks(request):
+def tasks(request, result=2):
+    if result == 0: # Ongoing tasks
+        tasks = Task.objects.filter(result=None)
+    elif result == 1: # Completed tasks
+        tasks = Task.objects.filter(result=True)
+    elif result == 2: # Ongoing tasks
+        tasks = Task.objects.filter(result=None)
+    elif result == 3: # All tasks
+        tasks = Task.objects.all()
+    elif result == 4: # Cancelled tasks
+        tasks = Task.objects.filter(result=False)
+    else: # Ongoing tasks
+        tasks = Task.objects.filter(result=None)
 
-    tasks = Task.objects.filter(result=None)
 
     return render(request, "maintenance/tasks.html", {
             "tasks": tasks,
         })
+
+@login_required
+def cancelTask(request, task_id):
+
+    try:
+        task = Task.objects.get(pk=task_id)
+    except:
+        messages.warning(request, "No such a task to cancel")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+    try:
+        with transaction.atomic():
+            task.closed = datetime.now()
+            task.result = False
+            task.save()
+    except IntegrityError as e:
+        messages.warning(request, "Something went wrong please try again")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    return redirect('tasks')
+
 
             
         
