@@ -1,0 +1,14 @@
+{% extends "maintenance/layout.html" %}
+{% load static %}
+{% load tz %}
+{% block title %}Complete Task{% endblock %}
+{% block head %}{% endblock %}
+{% block main %}
+    {% if task %}
+        <h1>Complete Task</h1>
+        
+    {% else %}
+    <p>No task has been choosen to complete</p>
+    {% endif %}
+{% endblock %}
+so what?

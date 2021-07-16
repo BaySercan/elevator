@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 import json
+from django.contrib.messages.api import warning
 from django.core import exceptions
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -62,7 +63,39 @@ class createTeamForm(forms.Form):
 
 ##### END OF FORM CLASSES ########
 def index(request):
-    return render(request, "maintenance/index.html")
+    user = request.user
+
+    if user.is_anonymous:
+        messages.warning(request, "Welcome! Please login or register")
+        return render(request, "maintenance/index.html")
+
+    #if user is confirmed
+    #(first check if user is confirmed)
+    if not user.confirmed:
+        messages.warning(request, "Your registration not confirmed yet. Please try again later.")
+        return render(request, "maintenance/index.html")
+    
+    #if user is staff
+    #(show day's tasks, ongoing, completed and cancelled)
+    if user.is_staff:
+        # Below SELECT * FROM ..... WHERE .... OR ..... query stands
+        tasks = Task.objects.filter(date__date__gte=date.today()) | Task.objects.filter(closed__date__gte=date.today())
+        return render(request, "maintenance/index.html", {
+            "tasks":tasks,
+        })
+
+    #if user has a team
+    #(show teams ongoing tasks)
+    try:
+        userTeam = UserTeam.objects.get(user_id = user.id)
+        team = Team.objects.get(pk=userTeam.team_id)
+        tasks = Task.objects.filter(team_id=team.id).exclude(result=0)
+    except:
+        messages.warning(request, "It seems you are not assigned to any team yet.")
+    
+    return render(request, "maintenance/index.html", {
+        "tasks":tasks,
+    })
 
 
 def register(request):
@@ -124,7 +157,8 @@ def login_view(request):
         if user is not None:
             if user.confirmed == True:
                 login(request, user)
-                return render(request, "maintenance/index.html")
+                #return render(request, "maintenance/index.html")
+                return HttpResponseRedirect(reverse("index"))
             else:
                 messages.warning(request, "Your supervisor have not confirmed your account yet.")
                 return render(request, "maintenance/login.html")
@@ -212,7 +246,7 @@ def buildings(request):
 @login_required
 def userlist(request):
 
-    users = User.objects.all()
+    users = User.objects.exclude(is_staff=1)
 
     for u in users:
         try:
@@ -255,8 +289,8 @@ def confirmUser(request, user_id):
 def teams(request):
 
     if request.user.is_staff != 1:
-        messages.warning(request, "You are not authorized to confirm or unconfirm a user.")
-        return reverse(request)
+        messages.warning(request, "You are not authorized.")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     teams = Team.objects.all()
 
@@ -558,6 +592,38 @@ def cancelTask(request, task_id):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     return redirect('tasks')
+
+@login_required
+def taskDone(request, task_id):
+    try:
+        task = Task.objects.get(pk=task_id)
+    except:
+        messages.warning(request, "No such a task to sign as completed")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+    user = request.user
+
+    try:
+        team = Team.objects.get(pk=task.team_id)
+        userTeam = UserTeam.objects.get(user_id = user.id)
+        if userTeam.user_id != user.id or userTeam.team_id != team.id:
+            messages.warning(request, "You are not authorized to sign this task as completed")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    except:
+        messages.warning(request, "You are not authorized to sign this task as completed")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+    materials = Material.objects.all()
+
+    return render(request, "maintenance/taskDone.html", {
+        "task":task,
+        "materials":materials
+    })
+
+
+    
+
+    
 
 
             
