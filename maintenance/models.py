@@ -33,6 +33,7 @@ class User(AbstractUser):
 
 class Building(models.Model):
     address = models.CharField(max_length=300)
+    coordinates = models.CharField(null=True, max_length=32)
     name = models.CharField(max_length=50)
     manager = models.CharField(max_length=100)
 
@@ -86,7 +87,7 @@ class Material(models.Model):
 class Task(models.Model):
     building = models.ForeignKey(Building, on_delete=CASCADE)
     team = models.ForeignKey(Team, on_delete=CASCADE)
-    material = models.ForeignKey(Material, on_delete=PROTECT, null=True, blank=True)
+    materials = models.ManyToManyField(Material, null=True, blank=True, related_name="materials")
     description = models.CharField(max_length=200, null=True, blank=True)
     date = models.DateTimeField(default=datetime.now())
     created = models.DateTimeField(default=datetime.now())

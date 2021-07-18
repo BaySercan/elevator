@@ -22,11 +22,10 @@
     </div>
     {% if tasks %}
         <div class="table-responsive" style="margin-top: 50px;">
-            <table class="table table-sm table-striped table-hover table-bordered">
+            <table class="table table-sm table-hover table-bordered">
                 <thead style="text-align: center;">
                     <th style="vertical-align: middle;">#</th>
                     <th style="vertical-align: middle;">Task ID</th>
-                    <th style="vertical-align: middle;">Building Name</th>
                     <th style="vertical-align: middle;">Building Address</th>
                     <th style="vertical-align: middle;">Building Manager</th>
                     <th style="vertical-align: middle;">Team</th>
@@ -45,8 +44,7 @@
                         <tr>
                             <td style="text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
                             <td style="text-align: center; vertical-align: middle;">{{ task.id }}</td>
-                            <td style="vertical-align: middle;">{{ task.building.name }}</td>
-                            <td style="vertical-align: middle;">{{ task.building.address }}</td>
+                            <td style="vertical-align: middle;"><strong>{{ task.building.name }}</strong> {{ task.building.address }}</td>
                             <td style="vertical-align: middle;">{{ task.building.manager }}</td>
                             <td style="text-align: center; vertical-align: middle;">{{ task.team.name }}</td>
                             <td style="text-align: center; vertical-align: middle;">{{ task.type.type }}</td>
@@ -59,13 +57,20 @@
                             {% else %}
                             <td style="text-align: center; vertical-align: middle;" class="table-warning">Ongoing</td>
                             {% endif %}
-                            
-                            <td style="vertical-align: middle;">{{ task.materials.name}}</td>
+
+                            <td style="vertical-align: middle;">
+                                <ul>
+                            {% for m in task.materials.all %}
+                                <li style="margin-bottom: 1px;">{{ m.name }}</li>
+                            {% endfor %}
+                                </ul>
+                            </td>
+
                             <td style="vertical-align: middle;">{{ task.description}}</td>
                             <td style="vertical-align: middle;">{{ task.notes}}</td>
                             <td style="vertical-align: middle;">{{ task.created|localtime|date:"d/m/Y H:i:s"}}</td>
                             <td style="vertical-align: middle;">{{ task.closed|localtime|date:"d/m/Y H:i:s"}}</td>
-                            {% if not task.result%}
+                            {% if task.result == None %}
                             <td style="vertical-align: middle; text-align: center;"><a class="btn btn-sm btn-danger taskCancelBtn" href="{% url 'cancelTask' task.id %}" data-taskid="{{ task.id }}">X</a></td>
                             {% else %}
                             <td></td>

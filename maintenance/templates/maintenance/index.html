@@ -2,17 +2,27 @@
 {% load static %}
 {% load tz %}
 {% block title %}Welcome{% endblock %}
-{% block head %}{% endblock %}
+{% block head %}
+<script src="{% static 'maintenance/route.js' %}"></script>
+{% endblock %}
 {% block main %}
     {% if tasks %}
+        {% if request.user.is_staff %}
+        <h1>Daily Tasks Dashboard</h1>
+        {% else %}
         <h1>Team's Tasks</h1>
+        {% endif %}
+        
         <div class="table-responsive">
         <table class="table table-sm table-hover table-bordered">
             <thead style="text-align: center;">
                 <th>#</th>
+                {% if request.user.is_staff %}
                 <th>Team</th>
+                {% endif %}
                 <th>Building</th>
                 <th>Task</th>
+                <th>Task ID</th>
                 <th>Status</th>
                 {% if not request.user.is_staff %}
                 <th>TODO</th>
@@ -22,28 +32,40 @@
                 {% for task in tasks %}
                 <tr>
                     <td style="vertical-align: middle; text-align: center;">{{ forloop.counter }}</td>
+                    {% if request.user.is_staff %}
                     <td style="vertical-align: middle; text-align: center;">{{ task.team.name }}</td>
+                    {% endif %}
                     <td style="vertical-align: middle;">
                         <p style="font-weight: 600; margin-bottom: 2px;">{{ task.building.name }}</p>
                         <p style="margin-bottom: 2px;">{{ task.building.address }}</p>
                         <p style="margin-bottom: 2px;">{{ task.building.manager }} : <a href="tel:+9{{task.building.phone}}">({{ task.building.phone }})</a></p>
                     </td>
                     <td style="vertical-align: middle; text-align: center;">{{ task.type }}</td>
+                    <td style="vertical-align: middle; text-align: center;">{{ task.id }}</td>
                     {% if task.result == True %}
                     <td style="vertical-align: middle; text-align: center;" class="table-success">Done</td>
                     {% elif task.result == False %}
                     <td style="vertical-align: middle; text-align: center;" class="table-danger">Cancelled</td>
                     {% else %}
-                    <td style="vertical-align: middle; text-align: center;" class="table-warning">Ongoing</td>
+                    <td style="vertical-align: middle; text-align: center;" data-coord="{{ task.building.coordinates }}" class="table-warning ongoing">Ongoing</td>
                     {% endif %}
                     {% if not request.user.is_staff %}
-                    <td style="vertical-align: middle; text-align: center;"><a href="{% url 'taskDone' task.id %}" class="btn btn-sm btn-success"><i class="far fa-check-circle"></i></a></td>
+                        {% if not task.result == 1 %}
+                        <td style="vertical-align: middle; text-align: center;"><a href="{% url 'taskDone' task.id %}" class="btn btn-sm btn-success"><i class="far fa-check-circle"></i></a></td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
                     {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         </div>
+        {% if not request.user.is_staff %}
+        <div style="margin-top:50px; margin-bottom: 100px; display: flex; justify-content: center; align-items: center;">
+            <input type="button" class="btn btn-sm btn-success col-lg-2 col-sm-12" value="Plan a route" id="routeBtn">
+        </div>
+        {% endif %}
     {% else %}
     {% endif %}
 {% endblock %}

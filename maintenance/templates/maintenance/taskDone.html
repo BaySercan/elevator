@@ -6,6 +6,29 @@
 {% block main %}
     {% if task %}
         <h1>Complete Task</h1>
+        <div class="alert alert-info">
+            <p style="font-weight: 600;">{{ task.building.name }}</p>
+            <p>{{ task.building.address }}</p>
+            <p>{{ task.type }} => {{ task.description }}</p>
+        </div>
+        <form action="{% url 'taskDone' task.id %}" method="POST">
+            {%csrf_token%}
+            <div class="row">
+                <div class="col-lg-6 col-sm-12 mt-3">
+                    <label>Choose materials you have used for this task</label>
+                    <select multiple aria-multiselectable="true" name="materials" size="9" class="form-control">
+                        {% for m in materials %}
+                            <option value="{{ m.id }}">{{ m.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-6 sol-sm-12 mt-3">
+                    <label>If you have notes about this task write it below</label>
+                    <textarea class="form-control" name="notes" rows="8" maxlength="400"></textarea>
+                </div>
+            </div>
+            <input class="btn btn-sm btn-success col-sm-12 col-lg-3 mt-3 mb-3" type="submit" style="float:left;" value="Sign as completed">
+        </form>
         
     {% else %}
     <p>No task has been choosen to complete</p>

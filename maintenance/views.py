@@ -17,6 +17,7 @@ from .models import Building, Team, User, UserTeam, MaintenanceAgreement, Mainte
 from django import forms
 from django.db import transaction, IntegrityError
 from django.contrib import messages
+import requests
 
 
 ##### FORM CLASSES ########
@@ -79,7 +80,7 @@ def index(request):
     #(show day's tasks, ongoing, completed and cancelled)
     if user.is_staff:
         # Below SELECT * FROM ..... WHERE .... OR ..... query stands
-        tasks = Task.objects.filter(date__date__gte=date.today()) | Task.objects.filter(closed__date__gte=date.today())
+        tasks = Task.objects.filter(result__isnull=True) | Task.objects.filter(closed__date=date.today(), result__isnull=True) | Task.objects.filter(result=1, closed__date=date.today())
         return render(request, "maintenance/index.html", {
             "tasks":tasks,
         })
@@ -192,6 +193,19 @@ def addBuilding(request):
             start_date = formBuilding.cleaned_data["start_date"]
             end_date = formBuilding.cleaned_data["end_date"]
 
+            Yandex_Geocoder_API_KEY = "5cf6cfdf-b3b4-45be-92e2-9f3ee7a6c8fe"
+            formatted_address = str(address).replace(" ", "+")
+            Yandex_URL = f"https://geocode-maps.yandex.ru/1.x/?apikey={Yandex_Geocoder_API_KEY}&format=json&geocode={formatted_address}&lang=tr-TR"
+
+            response = requests.get(Yandex_URL)
+            geodata = response.json()
+
+            point = geodata['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos']
+            LongLat = point.split(' ')
+
+            lastCoord = LongLat[1] + "," + LongLat[0]
+    
+
             try:
                 with transaction.atomic():
                     building = Building()
@@ -204,6 +218,7 @@ def addBuilding(request):
                     building.elevator_type = elevator_type
                     building.status = True
                     building.creator = request.user
+                    building.coordinates = lastCoord
                     building.save()
 
                     agreement = MaintenanceAgreement()
@@ -502,11 +517,19 @@ def createTask(request):
             if b.id in tasks.values_list("building_id", flat=True):
                 for t in tasks:
                     if b.id == t.building_id:
-                        last_maintenance = Task.objects.filter(building_id=b.id, result=True).last()
+                        last_maintenance = Task.objects.filter(building_id=b.id, result=True).order_by('id').last()
                         b.task_status = t.date
                         b.task_team = t.team.name
                         b.task_type = t.type.type
-                        b.last = last_maintenance
+                        if last_maintenance:
+                            b.last = last_maintenance.closed
+            else:
+                for t in Task.objects.filter(building_id=b.id, result=True):
+                    if b.id == t.building_id:
+                        last_maintenance = Task.objects.filter(building_id=b.id, result=True).order_by('id').last()
+                        if last_maintenance:
+                            b.last = last_maintenance.closed
+
         
         taskTypes = TaskTypes.objects.all()
 
@@ -555,18 +578,19 @@ def createTask(request):
 @login_required
 def tasks(request, result=2):
     if result == 0: # Ongoing tasks
-        tasks = Task.objects.filter(result=None)
+        tasks = Task.objects.filter(result=None).order_by("id").reverse()
     elif result == 1: # Completed tasks
-        tasks = Task.objects.filter(result=True)
+        tasks = Task.objects.filter(result=True).order_by("id").reverse()
     elif result == 2: # Ongoing tasks
-        tasks = Task.objects.filter(result=None)
+        tasks = Task.objects.filter(result=None).order_by("id").reverse()
     elif result == 3: # All tasks
         tasks = Task.objects.all()
     elif result == 4: # Cancelled tasks
-        tasks = Task.objects.filter(result=False)
+        tasks = Task.objects.filter(result=False).order_by("id").reverse()
     else: # Ongoing tasks
-        tasks = Task.objects.filter(result=None)
+        tasks = Task.objects.filter(result=None).order_by("id").reverse()
 
+    
 
     return render(request, "maintenance/tasks.html", {
             "tasks": tasks,
@@ -595,6 +619,7 @@ def cancelTask(request, task_id):
 
 @login_required
 def taskDone(request, task_id):
+    
     try:
         task = Task.objects.get(pk=task_id)
     except:
@@ -603,22 +628,42 @@ def taskDone(request, task_id):
     
     user = request.user
 
-    try:
-        team = Team.objects.get(pk=task.team_id)
-        userTeam = UserTeam.objects.get(user_id = user.id)
-        if userTeam.user_id != user.id or userTeam.team_id != team.id:
+    if request.method == "GET":
+        try:
+            team = Team.objects.get(pk=task.team_id)
+            userTeam = UserTeam.objects.get(user_id = user.id)
+            if userTeam.user_id != user.id or userTeam.team_id != team.id:
+                messages.warning(request, "You are not authorized to sign this task as completed")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        except:
             messages.warning(request, "You are not authorized to sign this task as completed")
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    except:
-        messages.warning(request, "You are not authorized to sign this task as completed")
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    
-    materials = Material.objects.all()
+        
+        materials = Material.objects.all()
 
-    return render(request, "maintenance/taskDone.html", {
-        "task":task,
-        "materials":materials
-    })
+        return render(request, "maintenance/taskDone.html", {
+            "task":task,
+            "materials":materials
+        })
+    else:
+
+        notes = request.POST["notes"]
+        formMaterials = [int(i) for i in request.POST.getlist("materials")] 
+        
+        try:
+            with transaction.atomic():
+                task.notes = notes
+                for m in formMaterials:
+                    mat = Material.objects.get(pk=m)
+                    task.materials.add(mat)
+                task.result = 1
+                task.closed = datetime.now()
+                task.save()
+        except IntegrityError as e:
+            messages.warning(request, "Something went wrong, please try again.")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        return redirect('index')
 
 
     
