@@ -11,6 +11,10 @@
         <a href="{% url 'addBuilding' %}" class="btn btn-sm btn-primary" style="float: left;">Add New Building</a>
     </div>
     {% if buildings %}
+        <div class="btn-group mb-1" role="group" aria-label="Basic example">
+            <button type="button" class="btn btn-light" id="tblToggleBtn" style="float:right;"><i class='fas fa-table'></i></button>
+            <button type="button" class="btn btn-light" id="cardToggleBtn" style="float:right;"><i class='fas fa-th-list'></i></button>
+        </div>
         <section id="buildingsCardView">
         {% for building in buildings %}
             <div class="card mb-3">
@@ -21,7 +25,7 @@
                 </div> -->
                 <div class="col-md-8">
                     <div class="card-body">
-                        <a href="" style="text-decoration: none;"><i class="fa fa-edit" style="font-size: 24px;"></i> <strong style="font-size:24px">{{ building.name }}</strong></a>
+                        <a href="{% url 'buildingDetail' building.id %}" style="text-decoration: none;"><i class="fa fa-edit" style="font-size: 24px;"></i> <strong style="font-size:24px">{{ building.name }}</strong></a>
                         <p class="card-text"><strong>Address: </strong>{{ building.address }}</p>
                         <p class="card-text"><strong>Manager: </strong>{{ building.manager }}</p>
                         <p class="card-text"><strong>Phone: </strong>{{ building.phone }}</p>
@@ -35,9 +39,49 @@
             </div>
         {% endfor %}
         </section>
+        <section id="buildingTableView" style="display: none;">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Manager</th>
+                        <th>Phone</th>
+                        <th>Floors</th>
+                        <th>Elevator Type</th>
+                    </thead>
+                    <tbody>
+                        {% for b in buildings %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href="{% url 'buildingDetail' b.id %}"><strong>{{ b.name }}</strong></a></td>
+                            <td>{{ b.address }}</td>
+                            <td>{{ b.manager }}</td>
+                            <td>{{ b.phone }}</td>
+                            <td>{{ b.floors }}</td>
+                            <td>{{ b.elevator_type }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
     {% else %}
         <div>
             <p>No buildings have been added so far. Click <strong>"Add New Building"</strong> button and add a new building.</p>
         </div>
     {% endif %}
+    <script>
+        document.querySelector('#tblToggleBtn').addEventListener('click', function() {
+            document.querySelector('#buildingsCardView').style.display = 'none';
+            document.querySelector('#buildingTableView').style.display = 'block';
+        })
+
+        document.querySelector('#cardToggleBtn').addEventListener('click', function() {
+            document.querySelector('#buildingsCardView').style.display = 'block';
+            document.querySelector('#buildingTableView').style.display = 'none';
+        })
+    </script>
 {% endblock %}

@@ -57,7 +57,7 @@ class registerationForm(forms.Form):
     confirm = forms.CharField(label="Confirm your password", max_length=24, widget=forms.PasswordInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;', 'type':'password'}))
 
 class createTeamForm(forms.Form):
-    leader = forms.ModelChoiceField(label="Choose e team leader", queryset=User.objects.filter(confirmed=True), widget=forms.Select(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
+    leader = forms.ModelChoiceField(label="Choose e team leader", queryset=User.objects.filter(confirmed=True, is_active=True), widget=forms.Select(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
     name = forms.CharField(label="Team name", max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
     description = forms.CharField(label="Description", max_length=200, widget=forms.Textarea(attrs={'class': 'form-control', 'style':'margin-bottom:15px;', 'rows':'2'}))
    
@@ -91,14 +91,13 @@ def index(request):
         userTeam = UserTeam.objects.get(user_id = user.id)
         team = Team.objects.get(pk=userTeam.team_id)
         tasks = Task.objects.filter(team_id=team.id).exclude(result=0)
+        return render(request, "maintenance/index.html", {
+            "tasks":tasks,
+        })
     except:
         messages.warning(request, "It seems you are not assigned to any team yet.")
+        return render(request, "maintenance/index.html")
     
-    return render(request, "maintenance/index.html", {
-        "tasks":tasks,
-    })
-
-
 def register(request):
     if request.method == "POST":
        formRegisteration = registerationForm(request.POST)
@@ -124,6 +123,14 @@ def register(request):
                 
             if password != confirm:
                 messages.warning(request, "Your password and confirmation password does not match!")
+                return render(request, "maintenance/register.html", {
+                    "formRegisteration": formRegisteration
+                })
+
+            users = User.objects.all()
+
+            if email in users.values_list('email') or username in users.values_list('username'):
+                messages.warning(request, "This email or username is already in use, please choose a different one.")
                 return render(request, "maintenance/register.html", {
                     "formRegisteration": formRegisteration
                 })
@@ -156,8 +163,10 @@ def login_view(request):
 
         # Check if authentication successful
         if user is not None:
-            if user.confirmed == True:
+            if user.confirmed == True and user.is_active == True:
                 login(request, user)
+                user.last_login = datetime.now()
+                user.save()
                 #return render(request, "maintenance/index.html")
                 return HttpResponseRedirect(reverse("index"))
             else:
@@ -173,6 +182,28 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse("index"))
+
+@login_required
+def deActiveUser(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+    except:
+        messages.warning(request, "No such user to deactivate")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    userTeam = UserTeam.objects.filter(pk=user_id)
+
+    if len(userTeam) > 0:
+        messages.warning(request, "This user is a member of a team, first remove him from team and try again.")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    user.is_active = False
+    user.save()
+    
+    messages.success(request, "User is deactivated successfully")
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
 
 @login_required
 #@transaction.atomic
@@ -262,8 +293,9 @@ def buildings(request):
 def userlist(request):
 
     users = User.objects.exclude(is_staff=1)
+    
 
-    for u in users:
+    for u in users.filter(is_active=1):
         try:
             userTeam = UserTeam.objects.get(user_id = u.id)
             if userTeam:
@@ -388,7 +420,7 @@ def populateTeam(request, team_id):
 
     #Each user can be added to a single team so bring users who have not been added any
     alreadyAdded = UserTeam.objects.all().values_list('user_id', flat=True)
-    users = User.objects.filter(is_active = True)
+    users = User.objects.filter(is_active = True, is_staff=False)
 
     suitableUsers = User.objects.none()
 
@@ -467,10 +499,16 @@ def deleteTeam(request, team_id):
         messages.warning(request, "No such team to delete.")
         return HttpResponseRedirect(reverse("teams"))
     
-    usersTeam = UserTeam.objects.filter(team_id=team.id)
+    usersTeam = UserTeam.objects.filter(team_id=team.id, role="member")
 
     if len(usersTeam) > 0:
         messages.warning(request, "First, remove all members from team and try again")
+        return HttpResponseRedirect(reverse("teams"))
+
+    teamTasks = Task.objects.filter(team_id=team.id, result=None)
+
+    if len(teamTasks) > 0:
+        messages.warning(request, "This team has ongoing tasks, first cancel those tasks and try again.")
         return HttpResponseRedirect(reverse("teams"))
 
     try:
@@ -665,10 +703,25 @@ def taskDone(request, task_id):
 
         return redirect('index')
 
+@login_required
+def buildingDetail(request, building_id):
+    try:
+        building = Building.objects.get(pk=building_id)
+    except:
+        messages.warning(request, "No such a building")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+    agreement = MaintenanceAgreement.objects.filter(building_id = building_id)
+
+    tasks = Task.objects.filter(building_id = building_id)
+
+    return render(request, "maintenance/buildingDetail.html", {
+        "building":building,
+        "agreement":agreement,
+        "tasks":tasks
+    })
     
 
-    
 
 
             

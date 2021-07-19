@@ -29,7 +29,6 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.first_name + " " + self.last_name + " (" + self.username + ")"
-    
 
 class Building(models.Model):
     address = models.CharField(max_length=300)

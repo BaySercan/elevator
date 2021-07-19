@@ -1,0 +1,124 @@
+{% extends "maintenance/layout.html" %}
+{% load static %}
+{% load tz %}
+{% block title %}Building Detail{% endblock %}
+{% block head %}{% endblock %}
+{% block main %}
+    {% if building %}
+        <div>
+            <h2>Building Info</h2>
+            <div class="row row-cols-1 row-cols-md-3">
+                <div class="col mb-4">
+                  <div class="card h-100 bg-light">
+                    <div class="card-body">
+                      <h5 class="card-title">Building Name</h5>
+                      <p class="card-text">{{ building.name }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col mb-4">
+                  <div class="card h-100 bg-light">
+                    <div class="card-body">
+                      <h5 class="card-title">Address</h5>
+                      <p class="card-text">{{ building.address }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col mb-4">
+                  <div class="card h-100 bg-info text-white">
+                    <div class="card-body">
+                      <h5 class="card-title">Manager</h5>
+                      <p class="card-text">{{ building.manager }}</p>
+                      <p class="card-text">{{ building.phone }}</p>
+                      <p class="card-text">{{ building.email }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col mb-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">Floors</h5>
+                      <p class="card-text"><strong>Floors: </strong>{{ building.floors }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col mb-4">
+                    <div class="card h-100">
+                      <div class="card-body">
+                        <h5 class="card-title">Elevator Type</h5>
+                        <p class="card-text"><strong>Elevator: </strong>{{ building.elevator_type }}</p>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+        </div>
+        {% if agreement %}
+            <div class="table-responsive" style="margin-top:15px;">
+                <h2>Agreements</h2>
+                <table class="table">
+                    <thead style="text-align: center; vertical-align: middle;">
+                        <th>Agreement Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                    </thead>
+                    <tbody>
+                        {% for a in agreement %}
+                        <tr style="text-align: center; vertical-align: middle;"">
+                            <td>{{ a.type }}</td>
+                            <td>{{ a.start_date|localtime|date:"d/m/Y" }}</td>
+                            <td>{{ a.end_date|localtime|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+        {% if tasks %}
+            <div class="table-responsive" style="margin-top:15px;">
+                <h2>Tasks</h2>
+                <table class="table ">
+                    <thead style="text-align: center; vertical-align: middle;">
+                        <th>#</th>
+                        <th>Task ID</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Result</th>
+                        <th>Closed Date</th>
+                        <th>Team</th>
+                        <th>Team Notes</th>
+                        <th>Materials</th>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                            <tr style="text-align: center; vertical-align: middle;">
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ task.id }}</td>
+                                <td>{{ task.type.type }}</td>
+                                <td style="text-align: left; vertical-align: middle;">{{ task.description }}</td>
+                                {% if task.result == None %}
+                                <td class="table-warning">Ongoing</td>
+                                {% elif task.result == True%}
+                                <td class="table-success">Done</td>
+                                {% elif task.result == False %}
+                                <td class="table-danger">Cancelled</td>
+                                {% endif %}
+                                <td>{{ task.closed|localtime|date:"d/m/Y H:i:s" }}</td>
+                                <td>{{ task.team.name }}</td>
+                                <td style="text-align: left; vertical-align: middle;">{{ task.notes }}</td>
+                                <td style="text-align: left; vertical-align: middle;">
+                                    <ul>
+                                        {% for m in task.materials.all %}
+                                            <li style="margin-top:1px; margin-bottom:1px">{{ m.name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+so what?

@@ -36,6 +36,11 @@
                     <td style="vertical-align: middle; text-align: center;">{{ task.team.name }}</td>
                     {% endif %}
                     <td style="vertical-align: middle;">
+                        <!-- {% if request.user.last_login < task.created %}
+                        <div class="spinner-grow spinner-grow-sm text-danger" role="status">
+                            <span class="visually-hidden">New Task</span>
+                          </div>
+                        {% endif %} -->
                         <p style="font-weight: 600; margin-bottom: 2px;">{{ task.building.name }}</p>
                         <p style="margin-bottom: 2px;">{{ task.building.address }}</p>
                         <p style="margin-bottom: 2px;">{{ task.building.manager }} : <a href="tel:+9{{task.building.phone}}">({{ task.building.phone }})</a></p>
