@@ -50,10 +50,11 @@
                         <th style="text-align: center; vertical-align: middle;">Phone</th>
                         <th style="text-align: center; vertical-align: middle;">Floors</th>
                         <th style="text-align: center; vertical-align: middle;">Elevator Type</th>
+                        <th style="text-align: center; vertical-align: middle;">Status</th>
                     </thead>
                     <tbody>
                         {% for b in buildings %}
-                        <tr>
+                        <tr {% if not b.status %} class="table-danger" {% endif %}>
                             <td style="text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
                             <td style="text-align: center; vertical-align: middle;"><a href="{% url 'buildingDetail' b.id %}"><strong>{{ b.name }}</strong></a></td>
                             <td style="text-align: center; vertical-align: middle;">{{ b.address }}</td>
@@ -61,6 +62,11 @@
                             <td style="text-align: center; vertical-align: middle;">{{ b.phone }}</td>
                             <td style="text-align: center; vertical-align: middle;">{{ b.floors }}</td>
                             <td style="text-align: center; vertical-align: middle;">{{ b.elevator_type }}</td>
+                            {% if b.status == True %}
+                            <td style="text-align: center; vertical-align: middle;">Active</td>
+                            {% else %}
+                            <td style="text-align: center; vertical-align: middle;">InActive</td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -2,8 +2,9 @@ from datetime import date, datetime
 import json
 from django.contrib.messages.api import warning
 from django.core import exceptions
+from django.core import validators
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, validate_email
 from django.forms.forms import Form
 from django.forms.widgets import TextInput
 from django.shortcuts import redirect, render
@@ -22,17 +23,16 @@ import requests
 
 ##### FORM CLASSES ########
 
+# your desired format 
+phone_regex = RegexValidator(
+    regex=r'^(05)\d{9}$',
+    message="Format must be like 05xxxxxxxxx",
+)
+
 class addBuildingForm(forms.Form):
     name = forms.CharField(label="Building Name", max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
     address = forms.CharField(label="Building Address", max_length=300, widget=forms.Textarea(attrs={'class': 'form-control', 'style':'margin-bottom:15px;', 'rows':'2'}))
     manager = forms.CharField(label="Building Manager", max_length=100, widget=TextInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;'}), required=False)
-    
-    # your desired format 
-    phone_regex = RegexValidator(
-        regex=r'^(05)\d{9}$',
-        message="Format must be like 05xxxxxxxxx",
-    )
-
     phone = forms.CharField(label="Manager Phone Number", max_length=11, widget=forms.NumberInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;', 'type':'phone'}), validators=[phone_regex], required=False)
     email = forms.EmailField(label="Manager E-mail Address", max_length=100, widget=forms.EmailInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;', 'type':'email'}), required=False)
     floors = forms.IntegerField(label="How many floors?", max_value=25, min_value=2, widget=forms.NumberInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;'}), required=False)
@@ -310,11 +310,76 @@ def addBuilding(request):
 @login_required
 def buildings(request):
 
-    buildings = Building.objects.filter(status=True)
+    buildings = Building.objects.all()
 
     return render(request, "maintenance/buildings.html", {
         "buildings":buildings
     })
+
+@login_required
+def editBuilding(request, building_id):
+
+    try:
+        building = Building.objects.get(pk=building_id)
+    except:
+        messages.warning(request, "No such a building to edit")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    data = json.loads(request.body)
+
+    name = body = data.get("name", "")
+    address = body = data.get("address", "")
+    manager = body = data.get("manager", "")
+    phone = body = data.get("phone", "")
+    email = body = data.get("email", "")
+    floors = body = data.get("floors", "")
+    elevator_type = body = data.get("elevator_type", "")
+    status = body = data.get("status", "")
+
+    if status == "False":
+        status = False
+    else:
+        status = True
+
+    oldAddress = building.address
+
+    if status == False:
+        tasks = Task.objects.filter(building_id = building.id, result__isnull=True)
+        if len(tasks) > 0:
+            return JsonResponse({"result":False, "message":"There are secheduled tasks for this building. Cancel those tasks and try again."}, status=500)
+
+    try:
+        with transaction.atomic():
+            building.name = name
+            building.address = address
+            building.manager = manager
+            building.phone = phone
+            building.email = email
+            building.floors = floors
+            building.elevator_type = elevator_type
+            building.status = status
+
+            if oldAddress != address:
+                Yandex_Geocoder_API_KEY = "5cf6cfdf-b3b4-45be-92e2-9f3ee7a6c8fe"
+                formatted_address = str(address).replace(" ", "+")
+                Yandex_URL = f"https://geocode-maps.yandex.ru/1.x/?apikey={Yandex_Geocoder_API_KEY}&format=json&geocode={formatted_address}&lang=tr-TR"
+
+                response = requests.get(Yandex_URL)
+                geodata = response.json()
+
+                point = geodata['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos']
+                LongLat = point.split(' ')
+
+                lastCoord = LongLat[1] + "," + LongLat[0]
+                building.coordinates = lastCoord
+
+            building.save()
+    except IntegrityError as e:
+        #messages.warning(request, "Something went wrong, please try again.")
+        return JsonResponse({"result":False, "message":"Something went wrong, please try again."}, status=500)
+
+    return JsonResponse({"result":True, "message":"Building updated successfully"}, status=200)
+
 
 @login_required
 def userlist(request):
@@ -338,7 +403,6 @@ def userlist(request):
         "users": users,
         "deActiveUsers":deActiveUsers
     })
-
 
 @login_required
 def confirmUser(request, user_id):

@@ -2,17 +2,22 @@
 {% load static %}
 {% load tz %}
 {% block title %}Building Detail{% endblock %}
-{% block head %}{% endblock %}
+{% block head %}
+<script src="{% static 'maintenance/buildingDetail.js' %}"></script>
+{% endblock %}
 {% block main %}
     {% if building %}
+      <div class="alert" style="display: none;"></div>
+      {%csrf_token%}
         <div>
-            <h2>Building Info</h2>
+            <h2><a href="javascript:void(0)" id="editBuilding" data-bid="{{ building.id }}"><i class='far fa-edit' style="font-size: 24;"></i></a> Building Info</h2>
             <div class="row row-cols-1 row-cols-md-3">
                 <div class="col mb-4">
                   <div class="card h-100 bg-light">
                     <div class="card-body">
                       <h5 class="card-title">Building Name</h5>
-                      <p class="card-text">{{ building.name }}</p>
+                      <p class="card-text bInfo" id="bName">{{ building.name }}</p>
+                      <input type="text" style="display: none;" name="bName" id="iName" class="editB form-control" maxlength="50">
                     </div>
                   </div>
                 </div>
@@ -20,7 +25,8 @@
                   <div class="card h-100 bg-light">
                     <div class="card-body">
                       <h5 class="card-title">Address</h5>
-                      <p class="card-text">{{ building.address }}</p>
+                      <p class="card-text bInfo" id="bAddress">{{ building.address }}</p>
+                      <textarea rows="3" style="display: none;" id="iAddress" class="editB form-control" maxlength="300"></textarea>
                     </div>
                   </div>
                 </div>
@@ -28,28 +34,54 @@
                   <div class="card h-100 bg-info text-white">
                     <div class="card-body">
                       <h5 class="card-title">Manager</h5>
-                      <p class="card-text">{{ building.manager }}</p>
-                      <p class="card-text">{{ building.phone }}</p>
-                      <p class="card-text">{{ building.email }}</p>
+                      <p class="card-text bInfo" id="bManager">{{ building.manager }}</p>
+                      <input type="text" style="display: none;" id="iManager" name="bManager" class="editB form-control mb-1" maxlength="100">
+                      <p class="card-text bInfo" id="bPhone">{{ building.phone }}</p>
+                      <input type="tel" style="display: none;" id="iPhone" name="bPhone" class="editB form-control mb-1" placeholder="05xxxxxxxxx" maxlength="11">
+                      <p class="card-text bInfo" id="bEmail">{{ building.email }}</p>
+                      <input type="email" style="display: none;" id="iEmail" name="bEmail" class="editB form-control" maxlength="100">
                     </div>
                   </div>
                 </div>
                 <div class="col mb-4">
                   <div class="card h-100">
                     <div class="card-body">
-                      <h5 class="card-title">Floors</h5>
-                      <p class="card-text"><strong>Floors: </strong>{{ building.floors }}</p>
+                      <h5 class="card-title" style="text-align: center;">Floors</h5>
+                      <p class="card-text bInfo" id="bFloors" style="font-size: 48px; font-weight: 600; text-align: center;">{{ building.floors }}</p>
+                      <input type="number" style="display: none;" id="iFloors" name="bFloors" class="editB form-control" max="25" min="2">
                     </div>
                   </div>
                 </div>
                 <div class="col mb-4">
                     <div class="card h-100">
                       <div class="card-body">
-                        <h5 class="card-title">Elevator Type</h5>
-                        <p class="card-text"><strong>Elevator: </strong>{{ building.elevator_type }}</p>
+                        <h5 class="card-title" style="text-align: center;">Elevator Type</h5>
+                        <p class="card-text bInfo" id="bElevator" style="font-weight: 600; font-size: 36px; text-align: center;">{{ building.elevator_type }}</p>
+                        <input type="text" style="display: none;" id="iElevator" name="bElevator" class="editB form-control" maxlength="100">
                       </div>
                     </div>
                   </div>
+                  <div class="col mb-4">
+                    <div class="card h-100">
+                      <div class="card-body">
+                        <h5 class="card-title" style="text-align: center;">Status</h5>
+                        <input type="hidden" value="{{ building.status }}" id="hiddenBstatus">
+                        {% if building.status == True %}
+                        <p class="card-text bInfo" id="bStatus" style="font-weight: 600; font-size: 48px; text-align: center;">Active</p>
+                        {% else %}
+                        <p class="card-text bInfo" id="bStatus" style="font-weight: 600; font-size: 48px; text-align: center;">InActive</p>
+                        {% endif %}
+                        <select style="display: none;" class="editB form-control" id="iStatus" name="bStatus">
+                            <option value="False">InActive</option>
+                            <option value="True">Active</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+              <div id="editBtnGroup" style="display: none;">
+                <button class="btn btn-sm btn-outline-danger" style="float:right" id="cancelEdit">Cancel</button>
+                <button class="btn btn-sm btn-primary mr-1" style="float:right" id="doEdit">Update</button>
               </div>
         </div>
         {% if agreement %}
@@ -74,7 +106,7 @@
             </div>
         {% endif %}
         {% if tasks %}
-            <div class="table-responsive" style="margin-top:15px;">
+            <div class="table-responsive" style="margin-top:15px; margin-bottom:80px">
                 <h2>Tasks</h2>
                 <table class="table" id="bldTasksTbl">
                     <thead style="text-align: center; vertical-align: middle;">
@@ -116,7 +148,6 @@
                         {% endfor %}
                     </tbody>
                 </table>
-
             </div>
         {% endif %}
     {% endif %}
