@@ -47,6 +47,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         })
     })
+
+    document.querySelector('#toggleTblBtn').addEventListener('click', function() {
+        if (this.classList.contains('active')) {
+            document.querySelector('#activeUsers').style.display = 'none';
+            document.querySelector('#deActiveUsers').style.display = 'block';
+            this.classList.remove('active');
+            this.value = "Show active users";
+        } else {
+            document.querySelector('#activeUsers').style.display = 'block';
+            document.querySelector('#deActiveUsers').style.display = 'none';
+            this.classList.add('active');
+            this.value = "Show unactive users";
+        }
+    })
     
 })
 

@@ -41,26 +41,26 @@
         </section>
         <section id="buildingTableView" style="display: none;">
             <div class="table-responsive">
-                <table class="table table-bordered">
+                <table class="table table-striped table-hover table-bordered">
                     <thead>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>Address</th>
-                        <th>Manager</th>
-                        <th>Phone</th>
-                        <th>Floors</th>
-                        <th>Elevator Type</th>
+                        <th style="text-align: center; vertical-align: middle;">#</th>
+                        <th style="text-align: center; vertical-align: middle;">Name</th>
+                        <th style="text-align: center; vertical-align: middle;">Address</th>
+                        <th style="text-align: center; vertical-align: middle;">Manager</th>
+                        <th style="text-align: center; vertical-align: middle;">Phone</th>
+                        <th style="text-align: center; vertical-align: middle;">Floors</th>
+                        <th style="text-align: center; vertical-align: middle;">Elevator Type</th>
                     </thead>
                     <tbody>
                         {% for b in buildings %}
                         <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td><a href="{% url 'buildingDetail' b.id %}"><strong>{{ b.name }}</strong></a></td>
-                            <td>{{ b.address }}</td>
-                            <td>{{ b.manager }}</td>
-                            <td>{{ b.phone }}</td>
-                            <td>{{ b.floors }}</td>
-                            <td>{{ b.elevator_type }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
+                            <td style="text-align: center; vertical-align: middle;"><a href="{% url 'buildingDetail' b.id %}"><strong>{{ b.name }}</strong></a></td>
+                            <td style="text-align: center; vertical-align: middle;">{{ b.address }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ b.manager }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ b.phone }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ b.floors }}</td>
+                            <td style="text-align: center; vertical-align: middle;">{{ b.elevator_type }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -83,5 +83,10 @@
             document.querySelector('#buildingsCardView').style.display = 'block';
             document.querySelector('#buildingTableView').style.display = 'none';
         })
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('table').DataTable();
+        });
     </script>
 {% endblock %}

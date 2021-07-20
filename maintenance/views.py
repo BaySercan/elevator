@@ -52,6 +52,8 @@ class addMaintenanceAggreementForm(forms.Form):
 
 class registerationForm(forms.Form):
     username = forms.CharField(label="Username", max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
+    first_name = forms.CharField(label="Firstname", max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
+    last_name = forms.CharField(label="Lastname", max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
     email = forms.EmailField(label="Your e-mail",  max_length=100, widget=forms.EmailInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;', 'type':'email'}))
     password = forms.CharField(label="Password", max_length=24, widget=forms.PasswordInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;', 'type':'password'}))
     confirm = forms.CharField(label="Confirm your password", max_length=24, widget=forms.PasswordInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;', 'type':'password'}))
@@ -106,6 +108,8 @@ def register(request):
         # Ensure password matches confirmation
             password = formRegisteration.cleaned_data["password"]
             username = formRegisteration.cleaned_data["username"]
+            first_name = formRegisteration.cleaned_data["first_name"]
+            last_name = formRegisteration.cleaned_data["last_name"]
             email = formRegisteration.cleaned_data["email"]
             confirm = formRegisteration.cleaned_data["confirm"]
 
@@ -138,6 +142,8 @@ def register(request):
             # Attempt to create new user
             try:
                 user = User.objects.create_user(username, email, password)
+                user.first_name = first_name
+                user.last_name = last_name
                 user.save()
             except IntegrityError as e:
                 messages.warning(request, e.__cause__)
@@ -188,22 +194,43 @@ def deActiveUser(request, user_id):
     try:
         user = User.objects.get(pk=user_id)
     except:
-        messages.warning(request, "No such user to deactivate")
+        messages.warning(request, "No such user to active/deactive")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    userTeam = UserTeam.objects.filter(pk=user_id)
+    userTeam = UserTeam.objects.filter(user_id=user_id)
 
     if len(userTeam) > 0:
         messages.warning(request, "This user is a member of a team, first remove him from team and try again.")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    user.is_active = False
+    if user.is_active == False:     
+        user.is_active = True
+        messages.success(request, "User is activated successfully")
+    else:
+        user.is_active = False
+        messages.success(request, "User is deactivated successfully")
+    
     user.save()
     
-    messages.success(request, "User is deactivated successfully")
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+@login_required
+#Remove user completly from database
+def removeUser(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+    except:
+        messages.warning(request, "No such user to deactivate")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+    if user.is_active == True:
+        messages.warning(request, "First deactivted this user and try again")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    user.delete()
+
+    messages.success(request, "User is deleted successfully")
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 @login_required
 #@transaction.atomic
@@ -291,11 +318,9 @@ def buildings(request):
 
 @login_required
 def userlist(request):
-
-    users = User.objects.exclude(is_staff=1)
+    users = User.objects.exclude(is_staff=1).filter(is_active=1)
     
-
-    for u in users.filter(is_active=1):
+    for u in users:
         try:
             userTeam = UserTeam.objects.get(user_id = u.id)
             if userTeam:
@@ -306,10 +331,14 @@ def userlist(request):
                     pass
         except:
             pass
+    
+    deActiveUsers = User.objects.filter(is_active=0)
         
     return render(request, "maintenance/userlist.html", {
-        "users": users
+        "users": users,
+        "deActiveUsers":deActiveUsers
     })
+
 
 @login_required
 def confirmUser(request, user_id):
@@ -690,7 +719,7 @@ def taskDone(request, task_id):
         
         try:
             with transaction.atomic():
-                task.notes = notes
+                task.notes = notes + f" < USER: {request.user.first_name} {request.user.last_name} >" 
                 for m in formMaterials:
                     mat = Material.objects.get(pk=m)
                     task.materials.add(mat)

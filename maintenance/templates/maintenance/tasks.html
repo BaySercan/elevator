@@ -21,8 +21,8 @@
         <a href="{% url 'tasks' 1 %}" class="btn btn-sm btn-success mr-1" style="float: left;">Completed</a>
     </div>
     {% if tasks %}
-        <div class="table-responsive" style="margin-top: 50px;">
-            <table class="table table-sm table-hover table-bordered">
+        <div class="table-responsive" style="margin-top: 50px; margin-bottom: 100px;">
+            <table class="table table-sm table-striped table-hover table-bordered">
                 <thead style="text-align: center;">
                     <th style="vertical-align: middle;">#</th>
                     <th style="vertical-align: middle;">Task ID</th>
@@ -95,4 +95,9 @@
             {% endif %}
         </div>
     {% endif %}
+    <script>
+        $(document).ready(function() {
+            $('table').DataTable();
+        });
+    </script>
 {% endblock %}

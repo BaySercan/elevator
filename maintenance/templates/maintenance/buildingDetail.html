@@ -76,7 +76,7 @@
         {% if tasks %}
             <div class="table-responsive" style="margin-top:15px;">
                 <h2>Tasks</h2>
-                <table class="table ">
+                <table class="table" id="bldTasksTbl">
                     <thead style="text-align: center; vertical-align: middle;">
                         <th>#</th>
                         <th>Task ID</th>
@@ -91,19 +91,19 @@
                     <tbody>
                         {% for task in tasks %}
                             <tr style="text-align: center; vertical-align: middle;">
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ task.id }}</td>
-                                <td>{{ task.type.type }}</td>
+                                <td style="text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
+                                <td style="text-align: center; vertical-align: middle;">{{ task.id }}</td>
+                                <td style="text-align: center; vertical-align: middle;">{{ task.type.type }}</td>
                                 <td style="text-align: left; vertical-align: middle;">{{ task.description }}</td>
                                 {% if task.result == None %}
-                                <td class="table-warning">Ongoing</td>
+                                <td class="table-warning" style="text-align: center; vertical-align: middle;">Ongoing</td>
                                 {% elif task.result == True%}
-                                <td class="table-success">Done</td>
+                                <td class="table-success" style="text-align: center; vertical-align: middle;">Done</td>
                                 {% elif task.result == False %}
-                                <td class="table-danger">Cancelled</td>
+                                <td class="table-danger" style="text-align: center; vertical-align: middle;">Cancelled</td>
                                 {% endif %}
-                                <td>{{ task.closed|localtime|date:"d/m/Y H:i:s" }}</td>
-                                <td>{{ task.team.name }}</td>
+                                <td style="text-align: center; vertical-align: middle;">{{ task.closed|localtime|date:"d/m/Y H:i:s" }}</td>
+                                <td style="text-align: center; vertical-align: middle;">{{ task.team.name }}</td>
                                 <td style="text-align: left; vertical-align: middle;">{{ task.notes }}</td>
                                 <td style="text-align: left; vertical-align: middle;">
                                     <ul>
@@ -120,5 +120,10 @@
             </div>
         {% endif %}
     {% endif %}
+    <script>
+      $(document).ready(function() {
+          $('#bldTasksTbl').DataTable();
+      });
+  </script>
 {% endblock %}
 so what?
