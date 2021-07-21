@@ -5,6 +5,8 @@ from django.core import exceptions
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_email
+from django.db.models.expressions import Subquery
+from django.db.models.query_utils import Q
 from django.forms.forms import Form
 from django.forms.widgets import TextInput
 from django.shortcuts import redirect, render
@@ -59,7 +61,7 @@ class registerationForm(forms.Form):
     confirm = forms.CharField(label="Confirm your password", max_length=24, widget=forms.PasswordInput(attrs={'class':'form-control', 'style':'margin-bottom:15px;', 'type':'password'}))
 
 class createTeamForm(forms.Form):
-    leader = forms.ModelChoiceField(label="Choose e team leader", queryset=User.objects.filter(confirmed=True, is_active=True), widget=forms.Select(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
+    leader = forms.ModelChoiceField(label="Choose e team leader", queryset=User.objects.filter(confirmed=True, is_active=True, is_staff=False).exclude(id__in=Subquery(UserTeam.objects.all().values_list('user_id', flat=True))), widget=forms.Select(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
     name = forms.CharField(label="Team name", max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'style':'margin-bottom:15px;'}))
     description = forms.CharField(label="Description", max_length=200, widget=forms.Textarea(attrs={'class': 'form-control', 'style':'margin-bottom:15px;', 'rows':'2'}))
    
@@ -294,7 +296,7 @@ def addBuilding(request):
 
             messages.success(request, 'You have successfully added new building.')
             return render(request, "maintenance/buildings.html", {
-                "buildings": Building.objects.filter(status = True)
+                "buildings": Building.objects.all()
             })
         else:
             messages.warning(request, 'Something went wrong please try again.')
@@ -380,6 +382,27 @@ def editBuilding(request, building_id):
 
     return JsonResponse({"result":True, "message":"Building updated successfully"}, status=200)
 
+@login_required
+def deleteBuilding(request, building_id):
+    try:
+        building = Building.objects.get(pk=building_id)
+    except:
+        messages.warning(request, "No such a building to delete")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    tasks = Task.objects.filter(building_id=building.id)
+
+    if len(tasks) > 0:
+        messages.warning(request, "There are tasks on this building, cancel them and try again.")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    building.delete()
+
+    buildings = Building.objects.all()
+
+    return render(request, "maintenance/buildings.html", {
+        "buildings":buildings
+    })
 
 @login_required
 def userlist(request):
@@ -438,6 +461,7 @@ def teams(request):
         f.members = []
 
     members = UserTeam.objects.filter(role="member")
+    suitableUsers = User.objects.filter(confirmed=True, is_active=True, is_staff=False).exclude(id__in=Subquery(UserTeam.objects.all().values_list('user_id', flat=True)))
 
     for m in members:
         if m.team in teams:
@@ -446,7 +470,8 @@ def teams(request):
                     t.members.append(m.user)
 
     return render(request, "maintenance/teams.html", {
-        "teams":teams
+        "teams":teams,
+        "suitableUsers":suitableUsers,
     })
 
 @login_required
@@ -490,9 +515,10 @@ def createTeam(request):
                 })
 
             messages.success(request, "You have successfully created a new team")
-            return render(request, "maintenance/teams.html", {
-                "teams": Team.objects.all()
-            })
+            return HttpResponseRedirect('teams')
+            # return render(request, "maintenance/teams.html", {
+            #     "teams": Team.objects.all()
+            # })
         else:
             return render(request, "maintenance/createTeam.html", {
                 "teamForm": teamForm
@@ -502,6 +528,43 @@ def createTeam(request):
         return render(request, "maintenance/createTeam.html", {
             "teamForm": createTeamForm()
         })
+
+@login_required
+def editTeam(request, team_id):
+    try:
+        team = Team.objects.get(id=team_id)
+    except:
+        messages.warning(request, "No such a team to edit")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    data = json.loads(request.body)
+
+    name = body = data.get("name", "")
+    leader = body = data.get("leader", "")
+    description = body = data.get("description", "")
+
+    try:
+        with transaction.atomic():
+            team.name = name
+            if team.leader.id != int(leader):
+                userTeamOld = UserTeam.objects.get(user_id=team.leader.id)
+                userTeamOld.delete()
+
+                team.leader = User.objects.get(pk=int(leader))
+
+                userTeamNew = UserTeam()
+                userTeamNew.user = User.objects.get(pk=int(leader))
+                userTeamNew.team = team
+                userTeamNew.role = "leader"
+                userTeamNew.created = datetime.now()
+                userTeamNew.save()
+
+            team.description = description
+            team.save()
+    except IntegrityError as e:
+        return JsonResponse({"result":False, "message":"Something went wrong, please try again."}, status=500)
+
+    return JsonResponse({"result":True, "message":"Team updated successfully"}, status=200)
 
 @login_required
 def populateTeam(request, team_id):

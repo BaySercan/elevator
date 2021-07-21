@@ -26,12 +26,28 @@
                 </div> -->
                 <div class="col-12">
                     <div class="card-body">
-                        <p><strong style="font-size:24px">{{ team.name }}</strong></p>
-                        <a href="{% url 'deleteTeam' team.id %}" class="btn btn-sm btn-outline-danger ml-1" style="float: right;">Delete Team</a>
-                        <a href="{% url 'populateTeam' team.id%}" class="btn btn-sm btn-success" style="float: right;">Add new members</a>
-                       
-                        <p class="card-text"><strong>Leader: </strong>{{ team.leader }}</p>
-                        <p class="card-text"><strong>Description: </strong>{{ team.description }}</p>
+                        <div class="row">
+                            <p style="font-size:24px; font-weight: 600;" id="tName-{{ team.id }}" class="tEdit-{{ team.id }} card-text col-6">{{ team.name }}</p>
+                            <input type="text" class="iEdit-{{ team.id }} form-control mb-1 col-6" id="iName-{{ team.id }}" name="name" style="display: none; width: 49%; margin-left: 14px;" maxlength="50">
+                            <div class="col-6 upperBtns">
+                                <a href="{% url 'deleteTeam' team.id %}" class="btn btn-sm btn-outline-danger ml-1 upperBtns-{{ team.id }}" style="float: right; display: inline;">Delete Team</a>
+                                <a href="javascript:void(0)" class="btn btn-sm btn-outline-dark ml-1 upperBtns-{{ team.id }}" style="float: right; display: inline;" id="editTeamBtn" data-tid="{{ team.id }}">Edit</a>
+                                <a href="{% url 'populateTeam' team.id%}" class="btn btn-sm btn-success upperBtns-{{ team.id }}" style="float: right; display: inline;">Add new members</a>
+                            </div>
+                        </div>
+                        <p class="card-text tEdit-{{ team.id }}"><strong>Leader: </strong><span id="tLeader-{{ team.id }}" data-leaderid="{{ team.leader.id }}">{{ team.leader }}</span></p>
+                        <select class="form-control iEdit-{{ team.id }} mb-1" id="iLeader-{{ team.id }}" name="leader" style="display: none; width: 50%;">
+                            <option value="{{ team.leader.id }}">{{ team.leader.first_name }} {{ team.leader.last_name }}</option>
+                            {% for u in suitableUsers %}
+                                <option value="{{ u.id }}">{{ u.first_name }} {{ u.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="card-text tEdit-{{ team.id }}"><strong>Description: </strong><span id="tDescription-{{ team.id }}">{{ team.description }}</span></p>
+                        <textarea rows="2" class="form-control iEdit-{{ team.id }} mb-1" style="display: none; width: 70%;" id="iDescription-{{ team.id }}" name="description" maxlength="200"></textarea>
+                        <div id="editBtnGroup-{{ team.id }}" style="display: none; margin-bottom: 15px;" class="mt-1 btnGrp">
+                            <button class="btn btn-sm btn-outline-danger mr-1" style="float:right" id="cancelEdit-{{ team.id }}">Cancel</button>
+                            <button class="btn btn-sm btn-primary mr-1" style="float:right" id="doEdit-{{ team.id }}">Update</button>
+                        </div>
                         {% if team.members|length > 0 %}
                         <h4>Members:</h4>
                             <div style="display: flex; flex-direction:row;">

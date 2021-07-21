@@ -14,6 +14,7 @@ urlpatterns = [
     path("userlist", views.userlist, name="userlist"),
     path("confirmUser/<int:user_id>", views.confirmUser, name="confirmUser"),
     path("teams", views.teams, name="teams"),
+    path("editTeam/<int:team_id>", views.editTeam, name="editTeam"),
     path("createTeam", views.createTeam, name="createTeam"),
     path('populateTeam/<int:team_id>', views.populateTeam, name="populateTeam"),
     path('addUserToTeam', views.addUserToTeam, name="addUserToTeam"),
@@ -26,4 +27,5 @@ urlpatterns = [
     path("taskDone/<int:task_id>", views.taskDone, name="taskDone"),
     path("buildingDetail/<int:building_id>", views.buildingDetail, name="buildingDetail"),
     path("editBuilding/<int:building_id>", views.editBuilding, name="editBuilding"),
+    path("deleteBuilding/<int:building_id>", views.deleteBuilding, name="deleteBuilding"),
 ]

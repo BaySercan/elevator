@@ -80,7 +80,8 @@
                   </div>
               </div>
               <div id="editBtnGroup" style="display: none;">
-                <button class="btn btn-sm btn-outline-danger" style="float:right" id="cancelEdit">Cancel</button>
+                <a href="{% url 'deleteBuilding' building.id %}" class="btn btn-sm btn-outline-dark" style="float:right" id="deleteBld">Delete Building</a>
+                <button class="btn btn-sm btn-outline-danger mr-1" style="float:right" id="cancelEdit">Cancel</button>
                 <button class="btn btn-sm btn-primary mr-1" style="float:right" id="doEdit">Update</button>
               </div>
         </div>
