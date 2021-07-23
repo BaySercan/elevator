@@ -94,7 +94,7 @@ def index(request):
     try:
         userTeam = UserTeam.objects.get(user_id = user.id)
         team = Team.objects.get(pk=userTeam.team_id)
-        tasks = Task.objects.filter(team_id=team.id).exclude(result=0)
+        tasks = Task.objects.filter(team_id=team.id).exclude(closed__date__lt=date.today()).exclude(result=0) | Task.objects.filter(result=0, closed__date=date.today())
         return render(request, "maintenance/index.html", {
             "tasks":tasks,
         })
@@ -778,7 +778,7 @@ def tasks(request, result=2):
     elif result == 2: # Ongoing tasks
         tasks = Task.objects.filter(result=None).order_by("id").reverse()
     elif result == 3: # All tasks
-        tasks = Task.objects.all()
+        tasks = Task.objects.all().order_by("id").reverse()
     elif result == 4: # Cancelled tasks
         tasks = Task.objects.filter(result=False).order_by("id").reverse()
     else: # Ongoing tasks
@@ -846,7 +846,7 @@ def taskDone(request, task_id):
         
         try:
             with transaction.atomic():
-                task.notes = notes + f" < USER: {request.user.first_name} {request.user.last_name} >" 
+                task.notes = notes + f" < USER: ({request.user.id}) {request.user.first_name} {request.user.last_name} >" 
                 for m in formMaterials:
                     mat = Material.objects.get(pk=m)
                     task.materials.add(mat)

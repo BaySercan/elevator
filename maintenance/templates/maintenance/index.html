@@ -55,7 +55,7 @@
                     <td style="vertical-align: middle; text-align: center;" data-coord="{{ task.building.coordinates }}" class="table-warning ongoing">Ongoing</td>
                     {% endif %}
                     {% if not request.user.is_staff %}
-                        {% if not task.result == 1 %}
+                        {% if not task.result == 1 and not task.result == 0%}
                         <td style="vertical-align: middle; text-align: center;"><a href="{% url 'taskDone' task.id %}" class="btn btn-sm btn-success"><i class="far fa-check-circle"></i></a></td>
                         {% else %}
                         <td></td>
