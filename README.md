@@ -3,9 +3,6 @@
 ## Distinctiveness and Complexity:
 With this project, I tried to answer a real life request. I learned that an elevator maintenance, repair and installation company, where my brother also works, needed a web application to manage their teams and monitor their areas of responsibility. So I decided that as the final project of the CS50x, I could address this issue and find a solution to their needs.
 
-## What’s contained in each file I created
-(I really can't believe you didn't approve the project just because of the lack of this section. What does it mean to write the contents of every file I create? I stayed up late at night to complete this project. I've already written what I want to do to the files I create in HTML, CSS, Javascript, Python. It is very easy to understand what is what in the file names. I would like to thank you for turning down my project -which I submitted with great enthusiasm,- for such an ordinary reason.)
-
 So here is the list, hope it'll help:
 
 - Template files are for registration, login, adding building, listing all buildings, building details, creating team, listing all teams, creating tasks, listing all tasks etc.
